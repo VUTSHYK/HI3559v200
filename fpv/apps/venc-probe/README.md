@@ -35,3 +35,33 @@ semantics require validation. No video buffers are retained or sent over network
 - `mw_sample` currently lacks an IMX458 profile. Do not deploy it unchanged.
 - The current middleware implementation has additional error-handling concerns
   around VENC start/stop; review before using this in a long-running service.
+
+## SDK-header cross-compile smoke test
+
+From `fpv/apps/venc-probe`, run:
+
+```sh
+make CC=arm-himix100-linux-gcc
+```
+
+This compiles `venc_probe.o` using the **actual** SDK headers rather than
+the test doubles in `tests/include`. It does not link a target executable.
+The cross compiler must be installed and available on `PATH`. This target
+has not yet been executed or validated against the hardware.
+
+For the isolated native unit tests:
+
+```sh
+make -C tests test
+```
+
+## Why the stock mw_sample is not yet an IMX458 executable
+
+`middleware/cfg.mak` identifies `CFG_CHIP_TYPE=hi3559v200`, but
+`middleware/sample/mw_sample/Makefile` has no `hi3559v200` branch
+and falls back to `SENSOR_IMX477`. Its `venc_wrapper.c` likewise has
+no `SENSOR_IMX458` initialization block. An IMX458 build needs validated
+sensor dimensions, FPS, MIPI lane mapping, VPROC ports and VENC settings
+from the **actual camera board**. Selecting an SDK config filename alone
+does not establish board compatibility. We deliberately have not copied
+IMX477 values or changed the vendor sample until those values are checked.
